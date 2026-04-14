@@ -1,0 +1,19 @@
+{
+  "name": "compuservice",
+  "version": "1.0.0",
+  "description": "Sistema MVP de CompuService",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cypress:open": "cypress open"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "cypress": "^13.7.0",
+    "vite": "^5.1.0"
+  }
+}
