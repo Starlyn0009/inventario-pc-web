@@ -1,8 +1,10 @@
 import { getProductos, createProducto, updateProducto, deleteProducto } from './services/productosService.js';
+import { getMovimientos, registrarMovimiento } from './services/movimientosService.js';
 
 let productos = [];
+let movimientos = [];
 
-// DOM Elements
+// DOM Elements - Productos
 const tablaProductos = document.getElementById('tabla-productos');
 const modal = document.getElementById('modal-producto');
 const btnNuevo = document.getElementById('btn-nuevo-producto');
@@ -12,22 +14,52 @@ const formProducto = document.getElementById('formulario-producto');
 const modalTitulo = document.getElementById('modal-titulo');
 const notificacion = document.getElementById('notificacion');
 
+// DOM Elements - Tabs y Vistas
+const tabProductos = document.getElementById('tab-productos');
+const tabMovimientos = document.getElementById('tab-movimientos');
+const vistaProductos = document.getElementById('vista-productos');
+const vistaMovimientos = document.getElementById('vista-movimientos');
+
+// DOM Elements - Movimientos
+const selectProducto = document.getElementById('mov-producto');
+const inputCantidad = document.getElementById('mov-cantidad');
+const btnEntrada = document.getElementById('btn-entrada');
+const btnSalida = document.getElementById('btn-salida');
+const tablaMovimientos = document.getElementById('tabla-movimientos');
+const formularioMovimientos = document.getElementById('formulario-movimientos');
+
 export async function initUI() {
   bindEvents();
   await cargarProductos();
+  await cargarMovimientos();
 }
 
 function bindEvents() {
+  // Tabs Nav
+  tabProductos.addEventListener('click', () => {
+    tabProductos.classList.add('active');
+    tabMovimientos.classList.remove('active');
+    vistaProductos.classList.remove('oculta');
+    vistaMovimientos.classList.add('oculta');
+  });
+
+  tabMovimientos.addEventListener('click', () => {
+    tabMovimientos.classList.add('active');
+    tabProductos.classList.remove('active');
+    vistaMovimientos.classList.remove('oculta');
+    vistaProductos.classList.add('oculta');
+  });
+
+  // Productos Events
   btnNuevo.addEventListener('click', () => abrirModal());
   btnCerrarModal.addEventListener('click', cerrarModal);
   btnCancelar.addEventListener('click', cerrarModal);
-  
+
   formProducto.addEventListener('submit', async (e) => {
     e.preventDefault();
     await guardarProducto();
   });
 
-  // Delegar eventos de tabla para botones dinámicos
   tablaProductos.addEventListener('click', async (e) => {
     const target = e.target.closest('button');
     if (!target) return;
@@ -35,13 +67,17 @@ function bindEvents() {
     const id = target.dataset.id;
     if (target.classList.contains('btn-editar')) {
       const producto = productos.find(p => p.id === id);
-      if(producto) abrirModal(producto);
+      if (producto) abrirModal(producto);
     } else if (target.classList.contains('btn-eliminar')) {
       if (confirm('¿Estás seguro de eliminar este producto?')) {
         await borrarProducto(id);
       }
     }
   });
+
+  // Movimientos Events
+  btnEntrada.addEventListener('click', () => procesarMovimiento('entrada'));
+  btnSalida.addEventListener('click', () => procesarMovimiento('salida'));
 }
 
 async function cargarProductos() {
@@ -49,6 +85,7 @@ async function cargarProductos() {
   try {
     productos = await getProductos();
     renderizarTabla();
+    actualizarSelectProductos();
   } catch (error) {
     mostrarNotificacion('Error al cargar inventario', 'error');
   } finally {
@@ -58,7 +95,7 @@ async function cargarProductos() {
 
 function renderizarTabla() {
   tablaProductos.innerHTML = '';
-  
+
   if (productos.length === 0) {
     tablaProductos.innerHTML = `<tr><td colspan="5" class="estado-tabla">No hay productos registrados.</td></tr>`;
     return;
@@ -93,10 +130,22 @@ function renderizarTabla() {
   });
 }
 
+function actualizarSelectProductos() {
+  selectProducto.innerHTML = '<option value="">Seleccione un producto...</option>';
+  productos.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.nombre} (Stock actual: ${p.stock})`;
+    selectProducto.appendChild(opt);
+  });
+}
+
+// ============== LOGICA DE PRODUCTOS ============== //
+
 async function guardarProducto() {
   const id = document.getElementById('producto-id').value;
   const btnGuardar = document.getElementById('btn-guardar');
-  
+
   const productoData = {
     nombre: document.getElementById('nombre').value,
     categoria: document.getElementById('categoria').value || null,
@@ -117,7 +166,7 @@ async function guardarProducto() {
       mostrarNotificacion('Producto creado correctamente', 'success');
     }
     cerrarModal();
-    await cargarProductos(); // Refresh
+    await cargarProductos(); // Refresh view
   } catch (error) {
     mostrarNotificacion('Ocurrió un error al guardar', 'error');
   } finally {
@@ -138,7 +187,7 @@ async function borrarProducto(id) {
 
 function abrirModal(producto = null) {
   modal.classList.remove('oculta');
-  
+
   if (producto) {
     modalTitulo.textContent = 'Editar Producto';
     document.getElementById('producto-id').value = producto.id;
@@ -159,10 +208,102 @@ function cerrarModal() {
   formProducto.reset();
 }
 
+// ============== LOGICA DE MOVIMIENTOS ============== //
+
+async function cargarMovimientos() {
+  try {
+    movimientos = await getMovimientos();
+    renderizarTablaMovimientos();
+  } catch (error) {
+    tablaMovimientos.innerHTML = `<tr><td colspan="4" class="estado-tabla">Error al cargar movimientos.</td></tr>`;
+  }
+}
+
+function renderizarTablaMovimientos() {
+  tablaMovimientos.innerHTML = '';
+  
+  if (movimientos.length === 0) {
+    tablaMovimientos.innerHTML = `<tr><td colspan="4" class="estado-tabla">No hay movimientos registrados.</td></tr>`;
+    return;
+  }
+
+  movimientos.forEach(mov => {
+    const tr = document.createElement('tr');
+    
+    // Badges
+    const badgeClass = mov.tipo === 'entrada' ? 'mov-entrada' : 'mov-salida';
+    const icn = mov.tipo === 'entrada' ? '🔼 Entrada' : '🔽 Salida';
+    
+    // Formatting
+    const date = new Date(mov.fecha).toLocaleString('es-ES', { 
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+    });
+    const prodName = mov.productos ? mov.productos.nombre : 'Producto desconocido/eliminado';
+    
+    tr.innerHTML = `
+      <td>${date}</td>
+      <td class="prod-nombre">${prodName}</td>
+      <td><span class="badge-mov ${badgeClass}">${icn}</span></td>
+      <td class="font-mono"><strong>${mov.cantidad}</strong> un.</td>
+    `;
+    tablaMovimientos.appendChild(tr);
+  });
+}
+
+async function procesarMovimiento(tipo) {
+  const prodId = selectProducto.value;
+  const cant = parseInt(inputCantidad.value, 10);
+
+  if (!prodId) {
+    mostrarNotificacion('Debe seleccionar un producto.', 'error');
+    return;
+  }
+  if (!cant || cant <= 0) {
+    mostrarNotificacion('La cantidad debe ser mayor a 0', 'error');
+    return;
+  }
+
+  const prod = productos.find(p => p.id === prodId);
+  if (!prod) return;
+
+  if (tipo === 'salida' && cant > prod.stock) {
+    mostrarNotificacion(`Error: Stock insuficiente. Stock actual es ${prod.stock}.`, 'error');
+    return;
+  }
+
+  const newStock = tipo === 'entrada' ? prod.stock + cant : prod.stock - cant;
+
+  // Deshabilitar botones mientras se procesa
+  btnEntrada.disabled = true;
+  btnSalida.disabled = true;
+
+  try {
+    // 1. Insertar en tabla movimientos (historial)
+    await registrarMovimiento(prodId, tipo, cant);
+    
+    // 2. Actualizar el stock del producto en la tabla principal
+    await updateProducto(prodId, { stock: newStock });
+    
+    mostrarNotificacion(`Se procesó la ${tipo} exitosamente.`, 'success');
+    formularioMovimientos.reset();
+    
+    // Recargar todo el estado desde Supabase
+    await cargarProductos();
+    await cargarMovimientos();
+  } catch (err) {
+    mostrarNotificacion(`Ocurrió un error al procesar la ${tipo}`, 'error');
+  } finally {
+    btnEntrada.disabled = false;
+    btnSalida.disabled = false;
+  }
+}
+
+// ============== UTILIDADES ============== //
+
 function mostrarNotificacion(mensaje, tipo = 'success') {
   notificacion.textContent = mensaje;
   notificacion.className = `notificacion show ${tipo}`;
-  
+
   setTimeout(() => {
     notificacion.classList.remove('show');
   }, 3000);
