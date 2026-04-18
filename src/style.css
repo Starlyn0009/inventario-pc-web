@@ -366,3 +366,113 @@ input:focus, textarea:focus {
 
 .notificacion.success { border-left-color: var(--success-color); }
 .notificacion.error { border-left-color: var(--danger-color); }
+
+/* --- Tabs & Navigation --- */
+.tabs-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.tab-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  transition: all 0.2s;
+  box-shadow: none;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* Views integration */
+#vista-productos.oculta,
+#vista-movimientos.oculta {
+  display: none !important;
+}
+
+/* Movimientos Form */
+.card-form-container {
+  background-color: var(--surface-color);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-form {
+  padding: 0;
+}
+
+select {
+  background-color: rgba(0,0,0, 0.2);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+select option {
+  background-color: var(--surface-color);
+  color: var(--text-primary);
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+  padding: 0.6rem 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  background-color: #059669; /* Emerald 600 */
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+  padding: 0.6rem 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  background-color: var(--danger-hover);
+}
+
+.badge-mov {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.mov-entrada {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: var(--success-color);
+}
+
+.mov-salida {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--danger-color);
+}
